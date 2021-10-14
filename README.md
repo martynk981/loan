@@ -1,8 +1,8 @@
-# loan
+# Loan
 
 Simple SLS service to allow companies to get the loan.
 
-##Tech design:
+## Tech design:
 
 Service is split into 3 parts:
   - infrastructure
@@ -15,6 +15,7 @@ Service is split into 3 parts:
 Storage specific:
 
 In the database we store such record:
+```code
 {
   loanId: auto generated on insert
   companyId: company id provided by the user
@@ -23,35 +24,36 @@ In the database we store such record:
   companyInfo: stringified object with company info received from the 3rd party service
   timestamp: date when the loan was created
 }
+```
 
-##API 
+## API 
 
 Loan-client:
 
-- GET {api-url}/all/{companyId}
+* GET {api-url}/all/{companyId}
   gets the all loans the company has
 
 
-- POST {api-url}/create
+* POST {api-url}/create
   creates the loan for the company
 
-- DELETE /delete/{loanId}
+* DELETE /delete/{loanId}
   deletes the specified loan
 
-- PUT /disburse/{loanId}
+* PUT /disburse/{loanId}
   disburses the specified loan
 
-##Deploy
+## Deploy
 To deploy the application run the command `npm run deploy`
 
-##TODO
+## TODO
 - implement disburse application if needed
   according to the current design we having separate API for the disbursing loans looks like unnecessary, all current operations can be implemented in one client application.
 
 - run the service locally
   due to the lack of experience with splitting service into several applications, we need more time to understand how to set the service to run it locally.
 
-- define OpenAPiI
+- create OpenAPI defenitions
 
 - improve test coverage
 
