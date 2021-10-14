@@ -1,0 +1,66 @@
+service: loan-infrastructure
+
+frameworkVersion: '2'
+
+projectDir: ./../
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  region: eu-central-1
+
+custom:
+  tableName: ${file(../serverless.common.yml):dynamoTableName}
+
+resources:
+  Resources:
+    LoanTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          -
+            AttributeName: loanId
+            AttributeType: S
+          -
+            AttributeName: companyId
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: loanId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        GlobalSecondaryIndexes:
+          -
+            IndexName: company_loan_index
+            KeySchema:
+              -
+                AttributeName: companyId
+                KeyType: HASH
+              -
+                AttributeName: loanId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+    ClientGatewayHttp:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: client-api-gateway
+  Outputs:
+    ClientGatewayHttp:
+      Value: !Ref ClientGatewayHttp
+      Export:
+        Name: ClientApiId
+    ClientGatewayHttpRootResourceId:
+      Value:
+         Fn::GetAtt:
+          - ClientGatewayHttp
+          - RootResourceId 
+      Export:
+        Name: RootClientApiIdResourceId

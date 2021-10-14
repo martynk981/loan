@@ -1,0 +1,82 @@
+service: loan-client
+
+projectDir: ./../../
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-dynamodb-local
+  - serverless-offline
+
+custom:
+  tableName: ${file(../../serverless.common.yml):dynamoTableName}
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  region: eu-central-1
+  tracing:
+    lambda: true
+  apiGateway:
+    restApiId:
+      'Fn::ImportValue': ClientApiId
+    restApiRootResourceId:
+      'Fn::ImportValue': RootClientApiIdResourceId 
+  iamRoleStatements:
+    - ${file(../../serverless.common.yml):lambdaPolicyXRay}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.tableName}/index/*"
+  environment:
+    LOAN_DISBURSE_SERVICE_URL:
+      !Join
+          - ''
+          - - 'https://'
+            - 'Fn::ImportValue': ClientApiId
+            - '.execute-api.'
+            - ${opt:region, self:provider.region}
+            - '.amazonaws.com/'
+            - ${opt:stage, self:provider.stage}
+    OPEN_KVK_URL: https://api.overheid.io/openkvk
+    OPEN_KVK_API_KEY: a6779e0e481ca8c9b224c53aac8bdc361c7ac6cb944c0a2efb01aea99911df00
+
+functions:
+  get-all-loans:
+    handler: handlers/get-all-loans-handler.handler
+    events:
+      - http:
+         path: /all/{companyId}
+         method: get
+  create-loan:
+    handler: handlers/create-loan-handler.handler
+    events:
+      - http:
+         path: /create
+         method: post
+  delete-loan:
+    handler: handlers/delete-loan-handler.handler
+    events:
+      - http:
+         path: /delete/{loanId}
+         method: delete
+  disburse-loan:
+    handler: handlers/disburse-loan-handler.handler
+    events:
+      - http:
+         path: /disburse/{loanId}
+         method: put
