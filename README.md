@@ -58,4 +58,5 @@ To deploy the application run the command `npm run deploy`
 - improve test coverage
 
 - use domains
+- store secrets in proper way (now I just hardcoded it)
 
